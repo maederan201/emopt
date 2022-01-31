@@ -100,19 +100,19 @@ bottom_cladding.layer = 2; bottom_cladding.material_value = eps_SiO2
 eps_bg.layer = 3; eps_bg.material_value = 1.0
 
 eps_y = emopt.grid.StructuredMaterial2D(W,H,dx,dy)
-eps_y.add_primitives([strip, bottom_cladding, eps_bg])
+eps_y.add_primitives([lnoi, bottom_cladding, eps_bg])
 
 # eps_zz
-strip = emopt.grid.Polygon(vertices[:,0],vertices[:,1])
+lnoi = emopt.grid.Polygon(vertices[:,0],vertices[:,1])
 bottom_cladding = emopt.grid.Rectangle(0, -tf/2. - h_clad/2. , W , h_clad)
 eps_bg = emopt.grid.Rectangle(0, tf/2. + (H-h_clad-tf)/2., W, (H-h_clad-tf))
 
-strip.layer = 1; strip.material_value = eps_LiNbO3_z
+lnoi.layer = 1; lnoi.material_value = eps_LiNbO3_z
 bottom_cladding.layer = 2; bottom_cladding.material_value = eps_SiO2
 eps_bg.layer = 3; eps_bg.material_value = 1.0
 
 eps_z = emopt.grid.StructuredMaterial2D(W,H,dx,dy)
-eps_z.add_primitives([strip, bottom_cladding, eps_bg])
+eps_z.add_primitives([lnoi, bottom_cladding, eps_bg])
 
 # We provide these three permittivities to the mode solver as a list
 eps = [eps_x, eps_y, eps_z]
@@ -123,22 +123,50 @@ domain = emopt.misc.DomainCoordinates(-W/2., W/2., -tf/2. - h_clad, tf/2. + (H -
 ####################################################################################
 # setup the mode solver
 ####################################################################################
-neigs = 1
+neigs = 4
 modes = emopt.modes.ModeFullVector(wavelength, eps, mu, domain, n0=np.sqrt(eps_LiNbO3_y), neigs=neigs)
 modes.build() # build the eigenvalue problem internally
 modes.solve() # solve for the effective indices and mode profiles
 
+
 ####################################################################################
 # Plot the hybrid modes
 ####################################################################################
+mindex = 0
+Ex = modes.get_field_interp(mindex, 'Ex', squeeze=True)
+Ey = modes.get_field_interp(mindex, 'Ey', squeeze=True)
+Ez = modes.get_field_interp(mindex, 'Ez', squeeze=True)
+if(NOT_PARALLEL):
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Polygon
+    print('COMSOL Result for Effective index: {:.8}'.format(comsol_result))
+    print('Effective index = {:.8}'.format(modes.neff[mindex].real))
+
+
+    E = np.sqrt(np.abs(Ex)**2 + np.abs(Ey)**2 + np.abs(Ez)**2)
+    vmin = np.min(np.abs(E))
+    vmax = np.max(np.abs(E))
+
+    f = plt.figure()
+    ax = f.add_subplot(111)
+    im = ax.imshow(np.abs(E), extent=[-W/2.,W/2.,-tf/2. - h_clad, tf/2. + (H - tf - h_clad)], vmin=vmin,
+                     vmax=vmax, cmap='inferno', origin='lower')
+
+    poly = Polygon(vertices,fill=False,lw=1,color='white')
+    ax.add_artist(poly)
+    ax.plot([-W/2., W/2.], [-tf/2.,-tf/2.], 'w-', linewidth=1)
+
+    f.colorbar(im)
+    plt.show()
+
 mindex = 1
 Ex = modes.get_field_interp(mindex, 'Ex', squeeze=True)
 Ey = modes.get_field_interp(mindex, 'Ey', squeeze=True)
 Ez = modes.get_field_interp(mindex, 'Ez', squeeze=True)
 if(NOT_PARALLEL):
     import matplotlib.pyplot as plt
-    print('COMSOL Result for Effective index: {:.5}'.format(comsol_result))
-    print('Effective index = {:.5}'.format(modes.neff[0].real))
+
+    print('Effective index = {:.8}'.format(modes.neff[mindex].real))
 
 
     E = np.sqrt(np.abs(Ex)**2 + np.abs(Ey)**2 + np.abs(Ez)**2)
@@ -147,40 +175,12 @@ if(NOT_PARALLEL):
 
     f = plt.figure()
     ax = f.add_subplot(111)
-    im = ax.imshow(np.abs(E), extent=[0,W,0,H], vmin=vmin,
+    im = ax.imshow(np.abs(E), extent=[-W/2.,W/2.,-tf/2. - h_clad, tf/2. + (H - tf - h_clad)], vmin=vmin,
                      vmax=vmax, cmap='inferno', origin='lower')
 
-    ax.plot([W/2-w_wg/2, W/2+w_wg/2, W/2+w_wg/2, W/2-w_wg/2, W/2-w_wg/2],
-            [H/2+h_wg/2, H/2+h_wg/2, H/2-h_wg/2, H/2-h_wg/2, H/2+h_wg/2],
-            'w-', linewidth=1.0)
-    ax.plot([0, W], [H/2-h_wg/2, H/2-h_wg/2], 'w-', linewidth=1)
-
-    f.colorbar(im)
-    plt.show()
-
-mindex = 2
-Ex = modes.get_field_interp(mindex, 'Ex', squeeze=True)
-Ey = modes.get_field_interp(mindex, 'Ey', squeeze=True)
-Ez = modes.get_field_interp(mindex, 'Ez', squeeze=True)
-if(NOT_PARALLEL):
-    import matplotlib.pyplot as plt
-
-    print('Effective index = {:.5}'.format(modes.neff[0].real))
-
-
-    E = np.sqrt(np.abs(Ex)**2 + np.abs(Ey)**2 + np.abs(Ez)**2)
-    vmin = np.min(np.abs(E))
-    vmax = np.max(np.abs(E))
-
-    f = plt.figure()
-    ax = f.add_subplot(111)
-    im = ax.imshow(np.abs(E), extent=[0,W,0,H], vmin=vmin,
-                     vmax=vmax, cmap='inferno', origin='lower')
-
-    ax.plot([W/2-w_wg/2, W/2+w_wg/2, W/2+w_wg/2, W/2-w_wg/2, W/2-w_wg/2],
-            [H/2+h_wg/2, H/2+h_wg/2, H/2-h_wg/2, H/2-h_wg/2, H/2+h_wg/2],
-            'w-', linewidth=1.0)
-    ax.plot([0, W], [H/2-h_wg/2, H/2-h_wg/2], 'w-', linewidth=1)
+    poly = Polygon(vertices,fill=False,lw=1,color='white')
+    ax.add_artist(poly)
+    ax.plot([-W/2., W/2.], [-tf/2.,-tf/2.], 'w-', linewidth=1)
 
     f.colorbar(im)
     plt.show()
