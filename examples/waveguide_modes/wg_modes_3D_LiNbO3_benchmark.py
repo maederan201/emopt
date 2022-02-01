@@ -29,7 +29,7 @@ neffs = []
 
 # for dxi in dxs:
 for wi in Ws:
-    dxi = 0.1
+    dxi = 0.02
     ####################################################################################
     # Set up the size of the problem
     ####################################################################################
@@ -166,7 +166,7 @@ if NOT_PARALLEL:
 
     fig, ax = plt.subplots()
     ax.plot(neffs[:,0],neffs[:,2])
-    ax.axhline(comsol_result,color='red',ls='dashed')
+    # ax.axhline(comsol_result,color='red',ls='dashed')
     ax.set_xlabel(r'$W$')
     ax.set_ylabel(r'Time [s]')
     plt.savefig('BenchmarkTime.png')
