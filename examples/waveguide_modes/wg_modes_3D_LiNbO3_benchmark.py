@@ -20,19 +20,21 @@ from emopt.misc import NOT_PARALLEL
 import numpy as np
 from math import pi
 
-dxs = np.linspace(0.1,0.001,50)
+dxs = np.linspace(0.1,0.01,500)
 # dxs = [0.05,0.04,0.03]
+Ws = np.linspace(3,12,25)
 comsol_result = 1.8907191769719351
 
 neffs = []
 
-for dxi in dxs:
-
+# for dxi in dxs:
+for wi in Ws:
+    dxi = 0.1
     ####################################################################################
     # Set up the size of the problem
     ####################################################################################
-    W = 3.0
-    H = 3.0
+    W = wi
+    H = wi
     dx = dxi
     dy = dxi
     N = int(np.ceil(W/dx)+1)
@@ -59,7 +61,7 @@ for dxi in dxs:
     h_wg = 0.3
     tf = 0.6
     angle = 65
-    h_clad = 1
+    h_clad = wi/2.
 
 
 
@@ -139,7 +141,7 @@ for dxi in dxs:
     modes.solve() # solve for the effective indices and mode profiles
     time_elapsed = (datetime.datetime.now() - start).total_seconds()
 
-    neffs.append([dxi,modes.neff[0].real,time_elapsed])
+    neffs.append([wi,modes.neff[0].real,time_elapsed])
 
 if NOT_PARALLEL:
     import matplotlib.pyplot as plt
@@ -149,14 +151,23 @@ if NOT_PARALLEL:
     fig, ax = plt.subplots()
     ax.plot(neffs[:,0],neffs[:,1])
     ax.axhline(comsol_result,color='red',ls='dashed')
-    ax.set_xlabel(r'$\Delta x$')
+    ax.set_xlabel(r'$W$')
     ax.set_ylabel(r'$n_{eff}$')
     plt.savefig('Benchmark.png')
+
+    res = np.sqrt((comsol_result - neffs[:,1])**2/neffs[:,1]**2)
+
+    fig, ax = plt.subplots()
+    ax.plot(neffs[:,0],res)
+    ax.axhline(0,color='red',ls='dashed')
+    ax.set_xlabel(r'$W$')
+    ax.set_ylabel(r'$n_{eff}$')
+    plt.savefig('BenchmarkResidual.png')
 
     fig, ax = plt.subplots()
     ax.plot(neffs[:,0],neffs[:,2])
     ax.axhline(comsol_result,color='red',ls='dashed')
-    ax.set_xlabel(r'$\Delta x$')
+    ax.set_xlabel(r'$W$')
     ax.set_ylabel(r'Time [s]')
     plt.savefig('BenchmarkTime.png')
 
