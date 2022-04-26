@@ -27,9 +27,10 @@ comsol_result = 1.8907191769719351
 
 neffs = []
 
-# for dxi in dxs:
-for wi in Ws:
-    dxi = 0.02
+for dxi in dxs:
+# for wi in Ws:
+    wi = 6
+    # dxi = 0.02
     ####################################################################################
     # Set up the size of the problem
     ####################################################################################
@@ -99,7 +100,7 @@ for wi in Ws:
 
     eps_x = emopt.grid.StructuredMaterial2D(W,H,dx,dy)
     eps_x.add_primitives([lnoi, bottom_cladding, eps_bg])
-    eps_x.add_primitives([lnoi])
+    # eps_x.add_primitives([lnoi])
 
     # eps_yy
     lnoi = emopt.grid.Polygon(vertices[:,0],vertices[:,1])
@@ -141,7 +142,7 @@ for wi in Ws:
     modes.solve() # solve for the effective indices and mode profiles
     time_elapsed = (datetime.datetime.now() - start).total_seconds()
 
-    neffs.append([wi,modes.neff[0].real,time_elapsed])
+    neffs.append([dxi,modes.neff[0].real,time_elapsed])
 
 if NOT_PARALLEL:
     import matplotlib.pyplot as plt
